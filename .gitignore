@@ -1,0 +1,6 @@
+*tmp*
+data/
+output/
+**.Rhistory
+**.RData
+**.Ruserdata
