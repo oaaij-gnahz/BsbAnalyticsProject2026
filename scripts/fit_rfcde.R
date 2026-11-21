@@ -5,7 +5,7 @@ devtools::load_all("~/R/my_external_libs/RFCDE/r")
 require("RFCDE")
 data_dir_statsapi <- "./data"
 data_dir_baseballsavant <- "./data"
-image_path <- "output/workspace_trackmanTo3_simpler.Rdata"
+image_path <- "output/workspace_trackmanToExitVelo.RData"
 years <- list(2026)
 load(file="output/processed_data20261118.RData")
 #%% use RFCDE
@@ -14,14 +14,14 @@ n_trees <- 100      # Number of trees in the forest
 mtry <- 2           # Number of variables to potentially split at in each node
 node_size <- 500     # Smallest node size
 n_basis <- 5       # Number of basis functions
-bandwidth <- "auto"    # Kernel bandwith - used for prediction only
+bandwidth <- "cv"    # Kernel bandwith - used for prediction only
 
 # Fit the model
 input_feature_names <- c(
   "plate_x", "plate_z", "release_speed", "induced_vert_break",
   "horz_break", "release_pos_x", "release_pos_z", "plate_time"
 )
-output_feature_names <- c("launch_speed", "launch_angle", "spray_angle")
+output_feature_names <- c("launch_speed")# c("launch_speed", "launch_angle", "spray_angle")
 feature_names <- c(input_feature_names, output_feature_names)
 model_data <- data_agg_battedball |>
   dplyr::filter(
@@ -52,11 +52,10 @@ print(sprintf("RFCDE fitted in %.2f secs\n",
   as.numeric(difftime(Sys.time(), start, unit = "secs"))
 ))
 
-save.image(file=image_path)
-
 #%% run prediction on the whole set
 grid_out_cde <- make_feature_histogram_grid(features_out)# make grid
 cde_grid_matrix <- do.call(rbind, grid_out_cde$centers) |> t()
+print(sprintf("[INFO] Predicting with RFCDE"))
 start <- Sys.time()
 cde_pred <- predict(
   rfcde_fit, features_in,
@@ -65,8 +64,8 @@ cde_pred <- predict(
 print(sprintf("RFCDE predictions done in %.2f secs\n",
   as.numeric(difftime(Sys.time(), start, unit = "secs"))
 ))
-saveRDS(cde_pred, file = sub("\\.Rdata$", "_cdePreds.rds", image_path))
-saveRDS(cde_grid_matrix, file = sub("\\.Rdata$", "_cdeGrid.rds", image_path))
+saveRDS(cde_pred, file = sub("\\.RData$", "_cdePreds.rds", image_path))
+saveRDS(cde_grid_matrix, file = sub("\\.RData$", "_cdeGrid.rds", image_path))
 #%% join the predictions and group analysis
 cbind_cde_data <- function(model_data, cde_matrix) {
   stopifnot(nrow(cde_matrix) == nrow(model_data))
